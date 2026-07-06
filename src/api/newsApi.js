@@ -23,15 +23,20 @@ import axios from 'axios';
 
 const API_KEY = import.meta.env.VITE_NEWS_API_KEY || '';
 const BASE_URL = import.meta.env.VITE_NEWS_API_BASE_URL || 'https://newsapi.org/v2';
+const isProduction = import.meta.env.PROD;
 
+// Create axios instance
 const client = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
 });
 
-// Attach the API key to every request automatically.
+// Attach the API key to every request automatically (only in development)
 client.interceptors.request.use((config) => {
-  config.params = { ...config.params, apiKey: API_KEY };
+  // In production, we use the proxy so we don't need to attach API key here
+  if (!isProduction) {
+    config.params = { ...config.params, apiKey: API_KEY };
+  }
   return config;
 });
 
@@ -78,13 +83,39 @@ function handleError(error) {
 }
 
 /**
+ * 🔥 NEW: Helper function to make API calls with proxy support
+ */
+async function fetchWithProxy(endpoint, params = {}) {
+  try {
+    let url;
+    if (isProduction) {
+      // Use Vercel serverless proxy in production
+      const queryParams = new URLSearchParams(params).toString();
+      url = `/api/news?endpoint=${endpoint}&${queryParams}`;
+    } else {
+      // Direct API call in development
+      const { data } = await client.get(endpoint, { params });
+      return data;
+    }
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
  * Get top headlines. Optionally filter by category and/or country.
  */
 export async function getTopHeadlines({ category = '', country = 'us', page = 1, pageSize = 12 } = {}) {
   try {
-    const { data } = await client.get('/top-headlines', {
-      params: { country, category: category || undefined, page, pageSize },
-    });
+    const params = { country, category: category || undefined, page, pageSize };
+    const data = await fetchWithProxy('/top-headlines', params);
     return normalizeResponse(data, category || 'general');
   } catch (error) {
     handleError(error);
@@ -96,9 +127,8 @@ export async function getTopHeadlines({ category = '', country = 'us', page = 1,
  */
 export async function getCountryHeadlines({ country = 'in', page = 1, pageSize = 12 } = {}) {
   try {
-    const { data } = await client.get('/top-headlines', {
-      params: { country, page, pageSize },
-    });
+    const params = { country, page, pageSize };
+    const data = await fetchWithProxy('/top-headlines', params);
     return normalizeResponse(data, 'india');
   } catch (error) {
     handleError(error);
@@ -111,9 +141,8 @@ export async function getCountryHeadlines({ country = 'in', page = 1, pageSize =
  */
 export async function getWorldNews({ page = 1, pageSize = 12 } = {}) {
   try {
-    const { data } = await client.get('/everything', {
-      params: { q: 'world', language: 'en', sortBy: 'publishedAt', page, pageSize },
-    });
+    const params = { q: 'world', language: 'en', sortBy: 'publishedAt', page, pageSize };
+    const data = await fetchWithProxy('/everything', params);
     return normalizeResponse(data, 'world');
   } catch (error) {
     handleError(error);
@@ -125,9 +154,8 @@ export async function getWorldNews({ page = 1, pageSize = 12 } = {}) {
  */
 export async function searchNews({ query, page = 1, pageSize = 12, sortBy = 'relevancy' }) {
   try {
-    const { data } = await client.get('/everything', {
-      params: { q: query, language: 'en', sortBy, page, pageSize },
-    });
+    const params = { q: query, language: 'en', sortBy, page, pageSize };
+    const data = await fetchWithProxy('/everything', params);
     return normalizeResponse(data, 'search');
   } catch (error) {
     handleError(error);
@@ -140,9 +168,8 @@ export async function searchNews({ query, page = 1, pageSize = 12, sortBy = 'rel
  */ 
 export async function getBreakingNews({ country = 'us', pageSize = 8 } = {}) {
   try {
-    const { data } = await client.get('/top-headlines', {
-      params: { country, pageSize },
-    });
+    const params = { country, pageSize };
+    const data = await fetchWithProxy('/top-headlines', params);
     return normalizeResponse(data, 'breaking');
   } catch (error) {
     handleError(error);
@@ -169,32 +196,25 @@ export default {
 };
 
 /**
- * 🔥 FIXED: Get India-specific news using search query.
+ * Get India-specific news using search query.
  * Falls back to US top headlines if India search fails.
  */
 export const fetchIndiaNews = async (pageSize = 20) => {
   try {
-    // Use the existing client (not 'api')
-    const { data } = await client.get('/everything', {
-      params: {
-        q: 'India OR Indian OR "Indian news"',
-        language: 'en',
-        pageSize,
-        sortBy: 'publishedAt'
-      }
-    });
-    // Use normalizeResponse (not normalizeArticle directly)
+    const params = {
+      q: 'India OR Indian OR "Indian news"',
+      language: 'en',
+      pageSize,
+      sortBy: 'publishedAt'
+    };
+    const data = await fetchWithProxy('/everything', params);
     return normalizeResponse(data, 'india');
   } catch (error) {
     console.error('India news error:', error);
     // Fallback to US headlines if India search fails
     try {
-      const { data } = await client.get('/top-headlines', {
-        params: {
-          country: 'us',
-          pageSize
-        }
-      });
+      const params = { country: 'us', pageSize };
+      const data = await fetchWithProxy('/top-headlines', params);
       return normalizeResponse(data, 'india');
     } catch (fallbackError) {
       handleError(fallbackError);
