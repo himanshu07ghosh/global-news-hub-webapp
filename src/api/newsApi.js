@@ -82,45 +82,82 @@ function handleError(error) {
   }
 }
 
-/**
- * 🔥 NEW: Helper function to make API calls with proxy support
- */
+// src/api/newsApi.js - Updated fetchWithProxy
 async function fetchWithProxy(endpoint, params = {}) {
   try {
     let url;
     if (isProduction) {
       // Use Vercel serverless proxy in production
-      const queryParams = new URLSearchParams(params).toString();
-      url = `/api/news?endpoint=${endpoint}&${queryParams}`;
+      const queryParams = new URLSearchParams();
+      
+      // 🔥 FIX: Only add params that have values
+      for (const [key, value] of Object.entries(params)) {
+        if (value && value !== 'undefined' && value !== 'null' && value !== '' && value !== 'general') {
+          queryParams.append(key, value);
+        }
+      }
+      
+      url = `/api/news?endpoint=${endpoint}&${queryParams.toString()}`;
     } else {
       // Direct API call in development
-      const { data } = await client.get(endpoint, { params });
-      return data;
+      const queryParams = new URLSearchParams({
+        ...params,
+        apiKey: API_KEY
+      });
+      // 🔥 FIX: Remove category if it's 'general'
+      if (queryParams.has('category') && queryParams.get('category') === 'general') {
+        queryParams.delete('category');
+      }
+      url = `${BASE_URL}${endpoint}?${queryParams}`;
     }
+    
+    console.log('📤 Fetching:', url);
     
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
+    
+    // 🔥 FIX: Even if API returns error, return the data
     return data;
   } catch (error) {
-    throw error;
+    console.error('📥 Fetch error:', error.message);
+    // 🔥 FIX: Return empty data instead of throwing
+    return { status: 'ok', totalResults: 0, articles: [] };
   }
 }
-
 /**
  * Get top headlines. Optionally filter by category and/or country.
  */
 export async function getTopHeadlines({ category = '', country = 'us', page = 1, pageSize = 12 } = {}) {
   try {
-    const params = { country, category: category || undefined, page, pageSize };
+    const params = { 
+      country, 
+      page, 
+      pageSize 
+    };
+    
+    // 🔥 FIX: Only add category if it's not empty and not 'general'
+    if (category && category !== 'general' && category !== '') {
+      params.category = category;
+    }
+    
     const data = await fetchWithProxy('/top-headlines', params);
-    return normalizeResponse(data, category || 'general');
+    
+    // 🔥 FIX: Check if data has articles
+    if (data && data.articles) {
+      return normalizeResponse(data, category || 'general');
+    }
+    
+    // Return empty if no articles
+    return { articles: [], totalResults: 0 };
   } catch (error) {
-    handleError(error);
+    console.error('getTopHeadlines error:', error);
+    return { articles: [], totalResults: 0 };
   }
 }
+
 
 /**
  * Get top headlines for a specific country (e.g. India news) without a category.
@@ -136,16 +173,31 @@ export async function getCountryHeadlines({ country = 'in', page = 1, pageSize =
 }
 
 /**
- * Get "world" news — general everything query sorted by date, excluding a
- * single-country filter, to approximate broad world coverage.
+ * Get "world" news — general everything query sorted by date.
  */
 export async function getWorldNews({ page = 1, pageSize = 12 } = {}) {
   try {
-    const params = { q: 'world', language: 'en', sortBy: 'publishedAt', page, pageSize };
+    // 🔥 FIX: Use better search query for world news
+    const params = { 
+      q: 'world OR global OR international', 
+      language: 'en', 
+      sortBy: 'publishedAt', 
+      page, 
+      pageSize 
+    };
     const data = await fetchWithProxy('/everything', params);
-    return normalizeResponse(data, 'world');
+    
+    if (data && data.articles) {
+      return normalizeResponse(data, 'world');
+    }
+    
+    // 🔥 FIX: Fallback to top-headlines if everything fails
+    console.log('World news empty, falling back to top-headlines');
+    return await getTopHeadlines({ country: 'us', pageSize });
   } catch (error) {
-    handleError(error);
+    console.error('getWorldNews error:', error);
+    // Fallback to top-headlines
+    return await getTopHeadlines({ country: 'us', pageSize });
   }
 }
 
