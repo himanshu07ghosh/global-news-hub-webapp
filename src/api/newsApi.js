@@ -262,78 +262,18 @@ export default {
   CATEGORIES,
 };
 
-/**
- * Get India-specific news using GNews API
- * Falls back to NewsAPI if GNews fails
- */
 export const fetchIndiaNews = async (pageSize = 20) => {
-  const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY || '';
-  const isProduction = import.meta.env.PROD;
-
-  try {
-    // Try GNews first (works in production)
-    if (GNEWS_API_KEY) {
-      const url = `https://gnews.io/api/v4/top-headlines?country=in&category=general&max=${pageSize}&apikey=${GNEWS_API_KEY}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data && data.articles && data.articles.length > 0) {
-        console.log('✅ India news from GNews:', data.articles.length);
-        // Normalize GNews format to match our structure
-        return {
-          articles: data.articles.map(article => ({
-            id: article.url || article.title,
-            title: article.title || 'Untitled',
-            description: article.description || '',
-            content: article.content || article.description || '',
-            author: article.source?.name || 'Unknown',
-            source: article.source?.name || 'GNews',
-            url: article.url,
-            imageUrl: article.image || null,
-            publishedAt: article.publishedAt || new Date().toISOString(),
-            category: 'india',
-          })),
-          totalResults: data.totalArticles || data.articles.length
-        };
-      }
-    }
-
-    // Fallback to NewsAPI if GNews fails
-    console.log('🔄 GNews failed or not configured, trying NewsAPI...');
-    const params = {
-      q: 'India',
-      language: 'en',
-      pageSize,
-      sortBy: 'publishedAt'
-    };
-    const data = await fetchWithProxy('/everything', params);
-    
-    if (data && data.articles && data.articles.length > 0) {
-      return normalizeResponse(data, 'india');
-    }
-    
-    // Final fallback: Mock data
-    console.log('🔄 Using mock India news data');
-    return getMockIndiaNews(pageSize);
-    
-  } catch (error) {
-    console.error('❌ India news error:', error);
-    return getMockIndiaNews(pageSize);
-  }
-};
-
-// Mock India news function
-function getMockIndiaNews(pageSize = 4) {
+  // Mock data for India news with images
   const mockArticles = [
     {
       id: 'mock-1',
-      title: 'India\'s Economy Shows Strong Growth Momentum',
+      title: "India's Economy Shows Strong Growth Momentum",
       description: 'Latest economic indicators show positive trend in GDP growth',
-      content: 'India\'s economy continues to show resilience with strong GDP growth...',
+      content: "India's economy continues to show resilience with strong GDP growth...",
       author: 'Economic Times',
       source: 'Economic Times',
       url: '#',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400&h=200&fit=crop', // Economy image
       publishedAt: new Date().toISOString(),
       category: 'india'
     },
@@ -345,19 +285,19 @@ function getMockIndiaNews(pageSize = 4) {
       author: 'TechCrunch India',
       source: 'TechCrunch India',
       url: '#',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=200&fit=crop', // Tech image
       publishedAt: new Date().toISOString(),
       category: 'india'
     },
     {
       id: 'mock-3',
-      title: 'India\'s Space Program Achieves New Milestone',
+      title: "India's Space Program Achieves New Milestone",
       description: 'ISRO successfully launches next-generation satellite',
-      content: 'India\'s space research organization achieves another milestone...',
+      content: "India's space research organization achieves another milestone...",
       author: 'The Hindu',
       source: 'The Hindu',
       url: '#',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=200&fit=crop', // Space image
       publishedAt: new Date().toISOString(),
       category: 'india'
     },
@@ -369,14 +309,49 @@ function getMockIndiaNews(pageSize = 4) {
       author: 'Sports India',
       source: 'Sports India',
       url: '#',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400&h=200&fit=crop', // Sports image
       publishedAt: new Date().toISOString(),
       category: 'india'
     }
   ];
   
+  // Try real API first
+  try {
+    const params = {
+      q: 'India news',
+      language: 'en',
+      pageSize,
+      sortBy: 'publishedAt'
+    };
+    const data = await fetchWithProxy('/everything', params);
+    if (data && data.articles && data.articles.length > 0) {
+      // Check if real articles have images
+      const articlesWithImages = data.articles.map(article => ({
+        ...article,
+        imageUrl: article.urlToImage || getFallbackImage(article.category)
+      }));
+      return normalizeResponse({ ...data, articles: articlesWithImages }, 'india');
+    }
+  } catch (error) {
+    console.log('India API failed, using mock data');
+  }
+  
+  // Return mock data with images
   return {
     articles: mockArticles.slice(0, pageSize),
     totalResults: mockArticles.length
   };
+};
+
+// Helper function for fallback images
+function getFallbackImage(category) {
+  const images = {
+    india: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400&h=200&fit=crop',
+    technology: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=200&fit=crop',
+    sports: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400&h=200&fit=crop',
+    business: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=200&fit=crop',
+    science: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=200&fit=crop',
+    default: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=200&fit=crop'
+  };
+  return images[category] || images.default;
 }
