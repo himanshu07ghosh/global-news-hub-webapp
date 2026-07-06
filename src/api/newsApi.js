@@ -127,6 +127,7 @@ async function fetchWithProxy(endpoint, params = {}) {
     return { status: 'ok', totalResults: 0, articles: [] };
   }
 }
+
 /**
  * Get top headlines. Optionally filter by category and/or country.
  */
@@ -158,7 +159,6 @@ export async function getTopHeadlines({ category = '', country = 'us', page = 1,
   }
 }
 
-
 /**
  * Get top headlines for a specific country (e.g. India news) without a category.
  */
@@ -166,9 +166,14 @@ export async function getCountryHeadlines({ country = 'in', page = 1, pageSize =
   try {
     const params = { country, page, pageSize };
     const data = await fetchWithProxy('/top-headlines', params);
-    return normalizeResponse(data, 'india');
+    
+    if (data && data.articles) {
+      return normalizeResponse(data, 'india');
+    }
+    return { articles: [], totalResults: 0 };
   } catch (error) {
-    handleError(error);
+    console.error('getCountryHeadlines error:', error);
+    return { articles: [], totalResults: 0 };
   }
 }
 
@@ -208,9 +213,14 @@ export async function searchNews({ query, page = 1, pageSize = 12, sortBy = 'rel
   try {
     const params = { q: query, language: 'en', sortBy, page, pageSize };
     const data = await fetchWithProxy('/everything', params);
-    return normalizeResponse(data, 'search');
+    
+    if (data && data.articles) {
+      return normalizeResponse(data, 'search');
+    }
+    return { articles: [], totalResults: 0 };
   } catch (error) {
-    handleError(error);
+    console.error('searchNews error:', error);
+    return { articles: [], totalResults: 0 };
   }
 }
 
@@ -222,9 +232,14 @@ export async function getBreakingNews({ country = 'us', pageSize = 8 } = {}) {
   try {
     const params = { country, pageSize };
     const data = await fetchWithProxy('/top-headlines', params);
-    return normalizeResponse(data, 'breaking');
+    
+    if (data && data.articles) {
+      return normalizeResponse(data, 'breaking');
+    }
+    return { articles: [], totalResults: 0 };
   } catch (error) {
-    handleError(error);
+    console.error('getBreakingNews error:', error);
+    return { articles: [], totalResults: 0 };
   }
 }
 
@@ -260,16 +275,24 @@ export const fetchIndiaNews = async (pageSize = 20) => {
       sortBy: 'publishedAt'
     };
     const data = await fetchWithProxy('/everything', params);
-    return normalizeResponse(data, 'india');
+    
+    if (data && data.articles) {
+      return normalizeResponse(data, 'india');
+    }
+    return { articles: [], totalResults: 0 };
   } catch (error) {
     console.error('India news error:', error);
     // Fallback to US headlines if India search fails
     try {
       const params = { country: 'us', pageSize };
       const data = await fetchWithProxy('/top-headlines', params);
-      return normalizeResponse(data, 'india');
+      if (data && data.articles) {
+        return normalizeResponse(data, 'india');
+      }
+      return { articles: [], totalResults: 0 };
     } catch (fallbackError) {
-      handleError(fallbackError);
+      console.error('India news fallback error:', fallbackError);
+      return { articles: [], totalResults: 0 };
     }
   }
 };
