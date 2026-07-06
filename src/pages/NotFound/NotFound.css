@@ -1,0 +1,35 @@
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 100px 24px;
+  min-height: 60vh;
+}
+
+.not-found__code {
+  font-size: clamp(5rem, 14vw, 9rem);
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.not-found h1 {
+  font-size: 1.6rem;
+  margin: 16px 0 10px;
+}
+
+.not-found p {
+  color: var(--text-secondary);
+  max-width: 420px;
+  margin-bottom: 32px;
+}
+
+.not-found__actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}

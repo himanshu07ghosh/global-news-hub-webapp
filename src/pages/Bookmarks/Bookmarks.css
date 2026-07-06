@@ -1,0 +1,56 @@
+.bookmarks-page {
+  padding: 32px 24px 64px;
+}
+
+.bookmarks-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.bookmarks-page__header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.bookmarks-page__header p {
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.bookmarks-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--text-muted);
+}
+
+.bookmarks-page__empty svg {
+  margin-bottom: 20px;
+  color: var(--color-primary);
+}
+
+.bookmarks-page__empty h3 {
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.bookmarks-page__empty p {
+  max-width: 380px;
+  margin-bottom: 24px;
+}
+
+.category-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.category-grid--cols-3 {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}

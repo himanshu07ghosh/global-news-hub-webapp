@@ -1,0 +1,31 @@
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-secondary);
+}
+
+.error-state__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--bg-surface-alt);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.error-state h3 {
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+}
+
+.error-state p {
+  max-width: 420px;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}

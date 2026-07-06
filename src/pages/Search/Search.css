@@ -1,0 +1,34 @@
+.search-page {
+  padding: 32px 24px 64px;
+}
+
+.search-page__title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 24px;
+}
+
+.search-page__hint {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 8px;
+}
+
+.search-page__count {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.category-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.category-grid--cols-3 {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.category-page__sentinel {
+  height: 1px;
+}

@@ -1,0 +1,14 @@
+.home__weather-row {
+  margin-top: 32px;
+  max-width: 320px;
+}
+
+.home__alt-bg {
+  background: var(--bg-surface-alt);
+}
+
+@media (max-width: 560px) {
+  .home__weather-row {
+    max-width: 100%;
+  }
+}

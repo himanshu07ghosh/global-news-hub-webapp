@@ -1,0 +1,78 @@
+.about-page {
+  padding: 48px 24px 80px;
+  max-width: 980px;
+}
+
+.about-page__hero {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 56px;
+}
+
+.about-page__hero h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  margin: 10px 0 18px;
+}
+
+.about-page__hero p {
+  color: var(--text-secondary);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.about-page__values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 56px;
+}
+
+.about-page__value-card {
+  padding: 26px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.about-page__value-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.about-page__value-card svg {
+  color: var(--color-primary);
+  margin-bottom: 14px;
+}
+
+.about-page__value-card h3 {
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.about-page__value-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.about-page__team {
+  background: var(--bg-surface-alt);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+
+.about-page__team h2 {
+  font-size: 1.3rem;
+  margin-bottom: 12px;
+}
+
+.about-page__team p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.about-page__team strong {
+  color: var(--color-primary);
+}
