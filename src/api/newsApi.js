@@ -268,31 +268,70 @@ export default {
  */
 export const fetchIndiaNews = async (pageSize = 20) => {
   try {
-    const params = {
-      q: 'India OR Indian OR "Indian news"',
+    // 🔥 FIX: Try multiple search strategies
+    const searchQueries = [
+      'India',
+      'Indian news',
+      'India politics',
+      'India business',
+      'India sports',
+      'Bollywood',
+      'India today'
+    ];
+    
+    let data = null;
+    
+    // Try each query until we get results
+    for (const query of searchQueries) {
+      const params = {
+        q: query,
+        language: 'en',
+        pageSize,
+        sortBy: 'publishedAt'
+      };
+      
+      const result = await fetchWithProxy('/everything', params);
+      
+      if (result && result.articles && result.articles.length > 0) {
+        data = result;
+        console.log(`✅ India news found with query: "${query}"`);
+        break;
+      }
+    }
+    
+    if (data && data.articles && data.articles.length > 0) {
+      return normalizeResponse(data, 'india');
+    }
+    
+    // 🔥 FALLBACK: Use top-headlines with country 'in'
+    console.log('🔄 India search failed, trying country headlines...');
+    try {
+      const params = { country: 'in', pageSize };
+      const fallbackData = await fetchWithProxy('/top-headlines', params);
+      if (fallbackData && fallbackData.articles && fallbackData.articles.length > 0) {
+        return normalizeResponse(fallbackData, 'india');
+      }
+    } catch (fallbackError) {
+      console.log('⚠️ India country headlines also failed');
+    }
+    
+    // 🔥 FINAL FALLBACK: Use US news with India-related search
+    console.log('🔄 Final fallback: US news with India tag...');
+    const finalParams = {
+      q: 'India OR Indian',
       language: 'en',
       pageSize,
       sortBy: 'publishedAt'
     };
-    const data = await fetchWithProxy('/everything', params);
-    
-    if (data && data.articles) {
-      return normalizeResponse(data, 'india');
+    const finalData = await fetchWithProxy('/everything', finalParams);
+    if (finalData && finalData.articles) {
+      return normalizeResponse(finalData, 'india');
     }
+    
     return { articles: [], totalResults: 0 };
   } catch (error) {
-    console.error('India news error:', error);
-    // Fallback to US headlines if India search fails
-    try {
-      const params = { country: 'us', pageSize };
-      const data = await fetchWithProxy('/top-headlines', params);
-      if (data && data.articles) {
-        return normalizeResponse(data, 'india');
-      }
-      return { articles: [], totalResults: 0 };
-    } catch (fallbackError) {
-      console.error('India news fallback error:', fallbackError);
-      return { articles: [], totalResults: 0 };
-    }
+    console.error('❌ India news error:', error);
+    // Ultimate fallback: Return empty
+    return { articles: [], totalResults: 0 };
   }
 };
