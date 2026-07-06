@@ -6,6 +6,12 @@ A modern, responsive news aggregation website built with React and Vite, pulling
 
 ---
 
+## Live Links :-
+
+Deployed Live Project : [Live Link 🔗🔗](https://global-news-hub-webapp-himanshughosh.vercel.app/)
+
+---
+
 ## ✨ Overview
 
 Global News Hub is a full-featured news reader covering breaking news, top headlines, category browsing (Technology, Business, Sports, Entertainment, Health, Science), India-specific news, world news, and live search — wrapped in a premium, Apple/BBC/The Verge-inspired UI with full dark mode support.
